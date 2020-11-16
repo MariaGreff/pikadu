@@ -1,8 +1,23 @@
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDH-RoeKSJaSSho7Nt-kMXOqCuTQ6nuA1M",
+  authDomain: "pikadu-test-d0d99.firebaseapp.com",
+  databaseURL: "https://pikadu-test-d0d99.firebaseio.com",
+  projectId: "pikadu-test-d0d99",
+  storageBucket: "pikadu-test-d0d99.appspot.com",
+  messagingSenderId: "582711283998",
+  appId: "1:582711283998:web:3c37f17bca17a13029390f",
+  measurementId: "G-EBLCBWRE8H"
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
+
 // Создаем переменную, в которую положим кнопку меню
 let menuToggle = document.querySelector('#menu-toggle');
 // Создаем переменную, в которую положим меню
 let menu = document.querySelector('.sidebar');
-// отслеживаем клик по кнопке меню и запускаем функцию 
 
 const regExpValidEmail = /^\w+@\w+\.\w{2,}$/;
 
@@ -23,6 +38,8 @@ const editUsername = document.querySelector('.edit-username');
 const editPhotoURL = document.querySelector('.edit-photo');
 
 const postsWrapper = document.querySelector('.posts');
+const buttonNewPost = document.querySelector('.button-new-post');
+const addPostElem = document.querySelector('.add-post');
 
 const listUsers = [
   {
@@ -30,6 +47,7 @@ const listUsers = [
     email: 'test1@test.com',
     password: 'password1',
     displayName: 'Test1',
+    photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU',
   },
   {
     id: '02',
@@ -108,7 +126,7 @@ const setPosts = {
       tags: [
         'fresh', 'new', 'hot', 'mine',
       ],
-      author: 'test1@test.com',
+      author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
       date: '11.11.2020, 20:55:00',
       likes: 15,
       comments: 5,
@@ -119,12 +137,30 @@ const setPosts = {
       tags: [
         'fresh', 'new', 'hot', 'mine',
       ],
-      author: 'test1@test.com',
+      author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
       date: '11.11.2020, 20:55:00',
       likes: 15,
       comments: 5,
     }
-  ]
+  ],
+  addPost(title, text, tags, handler) {
+    this.allPosts.unshift({
+      title,
+      text,
+      tags: tags.split(',').map(tag => tag.trim()),
+      author: {
+        displayName: setUsers.user.displayName,
+        photo: setUsers.user.photo,
+      },
+      date: new Date().toLocaleString(), 
+      likes: 0,
+      comments: 0,
+    })
+
+    if (handler) {
+      handler();
+    }
+  },
 };
 
 const toggleAuthDom = () => {
@@ -134,9 +170,14 @@ const toggleAuthDom = () => {
     userElem.style.display = '';
     userNameElem.textContent = user.displayName;
     userAvatarElem.src = user.photo || userAvatarElem.src;
+    buttonNewPost.classList.add('visible');
   } else {
     loginElem.style.display = '';
     userElem.style.display = 'none';
+    buttonNewPost.classList.remove('visible');
+    addPostElem.classList.remove('visible');
+    // TODO
+    postsWrapper.classList.add('visible');
   }
 };
 
@@ -181,10 +222,10 @@ const showAllPosts = () => {
   
       <div class="post-author">
         <div class="author-about">
-          <a href="#" class="author-username">${author}</a>
+          <a href="#" class="author-username">${author.displayName}</a>
           <span class="post-time">${date}</span>
         </div>
-        <a href="#" class="author-link"><img src="img/avatar.jpeg" alt="avatar" class="author-avatar"></a>
+        <a href="#" class="author-link"><img src=${author.photo || "img/avatar.jpeg"} alt="avatar" class="author-avatar"></a>
       </div>
     </div>
   </section>
@@ -192,9 +233,18 @@ const showAllPosts = () => {
   });
 
   postsWrapper.innerHTML = postsHTML;
+
+  addPostElem.classList.remove('visible');
+  postsWrapper.classList.add('visible');
+}
+
+const showAddPost = () => {
+  addPostElem.classList.add('visible');
+  postsWrapper.classList.remove('visible');
 }
 
 const init = () => {
+  // отслеживаем клик по кнопке меню и запускаем функцию 
   menuToggle.addEventListener('click', function (event) {
     // отменяем стандартное поведение ссылки
     event.preventDefault();
@@ -230,9 +280,50 @@ const init = () => {
     setUsers.editUser(editUsername.value, editPhotoURL.value, toggleAuthDom);
     editContainer.classList.remove('visible');
   });
+
+  buttonNewPost.addEventListener('click', (event) => {
+    event.preventDefault();
+    showAddPost();
+  });
+
+  addPostElem.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const { title, text, tags } = addPostElem.elements;
+
+    if (title.value.length < 6) {
+      alert ('Too short');
+      return;
+    }
+    if (text.value.length < 50) {
+      alert ('Too short');
+      return;
+    }
+
+    setPosts.addPost(title.value, text.value, tags.value, showAllPosts);
+
+    addPostElem.classList.remove('visible');
+    addPostElem.reset();
+  });
+
+  showAllPosts();
+  toggleAuthDom();
 }
 
-showAllPosts();
-toggleAuthDom();
-
 document.addEventListener('DOMContentLoaded', init);
+
+// tests
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    // User is signed in.
+    var displayName = user.displayName;
+    var email = user.email;
+    var emailVerified = user.emailVerified;
+    var photoURL = user.photoURL;
+    var isAnonymous = user.isAnonymous;
+    var uid = user.uid;
+    var providerData = user.providerData;
+    // ...
+  } else {
+    console.log(null);
+  }
+});
