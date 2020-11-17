@@ -14,9 +14,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 console.log('firebase: ', firebase);
 
-// Создаем переменную, в которую положим кнопку меню
 let menuToggle = document.querySelector('#menu-toggle');
-// Создаем переменную, в которую положим меню
 let menu = document.querySelector('.sidebar');
 
 const regExpValidEmail = /^\w+@\w+\.\w{2,}$/;
@@ -44,21 +42,21 @@ const loginForget = document.querySelector('.login-forget');
 
 DEFAULT_PHOTO = userAvatarElem.src;
 
-const listUsers = [
-  {
-    id: '01',
-    email: 'test1@test.com',
-    password: 'password1',
-    displayName: 'Test1',
-    photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU',
-  },
-  {
-    id: '02',
-    email: 'test2@test.com',
-    password: 'password2',
-    displayName: 'Test2',
-  }
-];
+// const listUsers = [
+//   {
+//     id: '01',
+//     email: 'test1@test.com',
+//     password: 'password1',
+//     displayName: 'Test1',
+//     photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU',
+//   },
+//   {
+//     id: '02',
+//     email: 'test2@test.com',
+//     password: 'password2',
+//     displayName: 'Test2',
+//   }
+// ];
 
 const setUsers = {
   user: null,
@@ -84,14 +82,6 @@ const setUsers = {
       .catch(error => {
         alert(error.message);
       });
-
-    // const user = this.getUser(email);
-    // if (user && user.password === password) {
-    //   this.authorizedUser(user);
-    //   handler();
-    // } else {
-    //   alert('No such user!')
-    // }
   },
   logOut() {
     firebase.auth().signOut();
@@ -106,7 +96,6 @@ const setUsers = {
       alert('Enter email and password');
       return;
     }
-
     firebase.auth()
       .createUserWithEmailAndPassword(email, password)
       .then(data => {
@@ -117,27 +106,10 @@ const setUsers = {
         const errorMessage = error.message;
         alert(errorMessage, errorCode);
       }); 
-
-    // if (!this.getUser(email)){
-    //   const newDisplayName = this.shortenDisplayName(email);
-    //   const user = {email, password, displayName: newDisplayName}
-    //   listUsers.push(user);
-    //   this.authorizedUser(user);
-    //   handler();
-    // } else {
-    //   alert('The user already exists!')
-    // }
   },
-  // getUser(email) {
-  //   return listUsers.find(item => item.email === email)
-  // },
   authorizedUser(user) {
     this.user = user;
   },
-  // shortenDisplayName(email) {
-  //   console.log(email.split('@')[0]);
-  //   return email.split('@')[0];
-  // },
   editUser(displayName, photoURL, handler) {
 
     const user = firebase.auth().currentUser;
@@ -295,12 +267,9 @@ const showAddPost = () => {
   postsWrapper.classList.remove('visible');
 }
 
-const init = () => {
-  // отслеживаем клик по кнопке меню и запускаем функцию 
+const init = () => { 
   menuToggle.addEventListener('click', function (event) {
-    // отменяем стандартное поведение ссылки
     event.preventDefault();
-    // вешаем класс на меню, когда кликнули по кнопке меню 
     menu.classList.toggle('visible');
   });
 
