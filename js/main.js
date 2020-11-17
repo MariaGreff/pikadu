@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-firebase.analytics();
+console.log('firebase: ', firebase);
 
 // Создаем переменную, в которую положим кнопку меню
 let menuToggle = document.querySelector('#menu-toggle');
@@ -40,6 +40,9 @@ const editPhotoURL = document.querySelector('.edit-photo');
 const postsWrapper = document.querySelector('.posts');
 const buttonNewPost = document.querySelector('.button-new-post');
 const addPostElem = document.querySelector('.add-post');
+const loginForget = document.querySelector('.login-forget');
+
+DEFAULT_PHOTO = userAvatarElem.src;
 
 const listUsers = [
   {
@@ -59,22 +62,39 @@ const listUsers = [
 
 const setUsers = {
   user: null,
+  initUser(handler) {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.user = user;
+      } else {
+        this.user = null;
+      }
+      if (handler) {
+        handler();
+      }
+    })
+  },
   logIn(email, password, handler) {
     if (!regExpValidEmail.test(email)) {
       alert ('Email is invalid');
       return;
     }
-    const user = this.getUser(email);
-    if (user && user.password === password) {
-      this.authorizedUser(user);
-      handler();
-    } else {
-      alert('No such user!')
-    }
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .catch(error => {
+        alert(error.message);
+      });
+
+    // const user = this.getUser(email);
+    // if (user && user.password === password) {
+    //   this.authorizedUser(user);
+    //   handler();
+    // } else {
+    //   alert('No such user!')
+    // }
   },
-  logOut(handler) {
-    this.user = null;
-    handler();
+  logOut() {
+    firebase.auth().signOut();
   },
   signUp(email, password, handler) {
     if (!regExpValidEmail.test(email)) {
@@ -87,80 +107,112 @@ const setUsers = {
       return;
     }
 
-    if (!this.getUser(email)){
-      const newDisplayName = this.shortenDisplayName(email);
-      const user = {email, password, displayName: newDisplayName}
-      listUsers.push(user);
-      this.authorizedUser(user);
-      handler();
-    } else {
-      alert('The user already exists!')
-    }
+    firebase.auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then(data => {
+        this.editUser(email.split('@')[0], null, handler);
+      })
+      .catch(error => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage, errorCode);
+      }); 
+
+    // if (!this.getUser(email)){
+    //   const newDisplayName = this.shortenDisplayName(email);
+    //   const user = {email, password, displayName: newDisplayName}
+    //   listUsers.push(user);
+    //   this.authorizedUser(user);
+    //   handler();
+    // } else {
+    //   alert('The user already exists!')
+    // }
   },
-  getUser(email) {
-    return listUsers.find(item => item.email === email)
-  },
+  // getUser(email) {
+  //   return listUsers.find(item => item.email === email)
+  // },
   authorizedUser(user) {
     this.user = user;
   },
-  shortenDisplayName(email) {
-    console.log(email.split('@')[0]);
-    return email.split('@')[0];
+  // shortenDisplayName(email) {
+  //   console.log(email.split('@')[0]);
+  //   return email.split('@')[0];
+  // },
+  editUser(displayName, photoURL, handler) {
+
+    const user = firebase.auth().currentUser;
+
+    if (displayName) {
+      if (photoURL) {
+        user.updateProfile({
+          displayName,
+          photoURL
+        }).then(handler);
+      } else {
+        user.updateProfile({
+          displayName
+        }).then(handler);
+      }
+    }
   },
-  editUser(userName, userPhoto, handler) {
-    if (userName) {
-      this.user.displayName = userName;
-    }
-    if (userPhoto) {
-      this.user.photo = userPhoto;
-    }
-    handler();
-  }
+  sendForget(email) {
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(() => {
+        alert ('Check your email')
+      })
+      .catch(error => console.log(error));
+  },
 };
 
 const setPosts = {
-  allPosts: [
-    {
-      title: 'Заголовлок поста',
-      text: 'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
-      tags: [
-        'fresh', 'new', 'hot', 'mine',
-      ],
-      author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
-      date: '11.11.2020, 20:55:00',
-      likes: 15,
-      comments: 5,
-    },
-    {
-      title: 'Заголовлок поста2',
-      text: 'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
-      tags: [
-        'fresh', 'new', 'hot', 'mine',
-      ],
-      author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
-      date: '11.11.2020, 20:55:00',
-      likes: 15,
-      comments: 5,
-    }
-  ],
+  // allPosts: [
+  //   {
+  //     title: 'Заголовлок поста',
+  //     text: 'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
+  //     tags: [
+  //       'fresh', 'new', 'hot', 'mine',
+  //     ],
+  //     author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
+  //     date: '11.11.2020, 20:55:00',
+  //     likes: 15,
+  //     comments: 5,
+  //   },
+  //   {
+  //     title: 'Заголовлок поста2',
+  //     text: 'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
+  //     tags: [
+  //       'fresh', 'new', 'hot', 'mine',
+  //     ],
+  //     author: {displayName: 'test', photo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRvCmjNf46BNewcQJYO0SUrlX6e4Vk1O_PmyQ&usqp=CAU'},
+  //     date: '11.11.2020, 20:55:00',
+  //     likes: 15,
+  //     comments: 5,
+  //   }
+  // ],
   addPost(title, text, tags, handler) {
     this.allPosts.unshift({
+      id: `postID${(+new Date()).toString(16)}`,
       title,
-      text,
+      text, 
       tags: tags.split(',').map(tag => tag.trim()),
       author: {
         displayName: setUsers.user.displayName,
-        photo: setUsers.user.photo,
+        photo: setUsers.user.photoURL,
       },
       date: new Date().toLocaleString(), 
       likes: 0,
       comments: 0,
     })
 
-    if (handler) {
-      handler();
-    }
+    firebase.database().ref('post').set(this.allPosts)
+      .then(()=> this.getPosts(handler));
   },
+  getPosts(handler) {
+    firebase.database().ref('post').on('value', snapshot => {
+      this.allPosts = snapshot.val() || [];
+      handler();
+    })
+  }
 };
 
 const toggleAuthDom = () => {
@@ -169,7 +221,7 @@ const toggleAuthDom = () => {
     loginElem.style.display = 'none';
     userElem.style.display = '';
     userNameElem.textContent = user.displayName;
-    userAvatarElem.src = user.photo || userAvatarElem.src;
+    userAvatarElem.src = user.photoURL || DEFAULT_PHOTO;
     buttonNewPost.classList.add('visible');
   } else {
     loginElem.style.display = '';
@@ -286,6 +338,12 @@ const init = () => {
     showAddPost();
   });
 
+  loginForget.addEventListener('click', event => {
+    event.preventDefault();
+    setUsers.sendForget(emailInput.value);
+    emailInput.value = '';
+  }) 
+
   addPostElem.addEventListener('submit', (event) => {
     event.preventDefault();
     const { title, text, tags } = addPostElem.elements;
@@ -305,25 +363,8 @@ const init = () => {
     addPostElem.reset();
   });
 
-  showAllPosts();
-  toggleAuthDom();
+  setUsers.initUser(toggleAuthDom);
+  setPosts.getPosts(showAllPosts);
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-// tests
-firebase.auth().onAuthStateChanged(function(user) {
-  if (user) {
-    // User is signed in.
-    var displayName = user.displayName;
-    var email = user.email;
-    var emailVerified = user.emailVerified;
-    var photoURL = user.photoURL;
-    var isAnonymous = user.isAnonymous;
-    var uid = user.uid;
-    var providerData = user.providerData;
-    // ...
-  } else {
-    console.log(null);
-  }
-});
